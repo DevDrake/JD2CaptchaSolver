@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: jdownloader2-captchasolver:latest
+    image: jd2captchasolver:latest
     container_name: jdownloader2
     environment:
       - USER_ID=1000

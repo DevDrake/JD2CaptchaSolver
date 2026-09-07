@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cracker0dks/CaptchaSolver.git"
+    "url": "git+https://github.com/DevDrake/JD2CaptchaSolver.git"
   },
   "keywords": [
     "captchasolver"
@@ -20,7 +20,7 @@
   "author": "cracker0kds",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/cracker0dks/CaptchaSolver/issues"
+    "url": "https://github.com/DevDrake/JD2CaptchaSolver/issues"
   },
-  "homepage": "https://github.com/cracker0dks/CaptchaSolver#readme"
+  "homepage": "https://github.com/DevDrake/JD2CaptchaSolver#readme"
 }

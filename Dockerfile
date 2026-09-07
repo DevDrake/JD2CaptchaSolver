@@ -32,36 +32,36 @@ RUN apk add --no-cache \
 # Copy the natively compiled Darknet binary
 COPY --from=darknet-builder /tmp/darknet/darknet /defaults/darknet
 
-# Prepare directory for CaptchaSolver defaults
-RUN mkdir -p /defaults/CaptchaSolver/jd/captcha/methods \
-    && mkdir -p /defaults/CaptchaSolver/tools/offlineCaptchaSolver
+# Prepare directory for JD2CaptchaSolver defaults
+RUN mkdir -p /defaults/JD2CaptchaSolver/jd/captcha/methods \
+    && mkdir -p /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver
 
 # Copy repository files into defaults
-COPY ["JDownloader 2.0/jd/captcha/methods/", "/defaults/CaptchaSolver/jd/captcha/methods/"]
-COPY ["JDownloader 2.0/tools/offlineCaptchaSolver/", "/defaults/CaptchaSolver/tools/offlineCaptchaSolver/"]
+COPY ["JDownloader 2.0/jd/captcha/methods/", "/defaults/JD2CaptchaSolver/jd/captcha/methods/"]
+COPY ["JDownloader 2.0/tools/offlineCaptchaSolver/", "/defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/"]
 
 # Replace darknet with our musl-native compiled binary and remove Windows binaries
-RUN cp /defaults/darknet /defaults/CaptchaSolver/tools/offlineCaptchaSolver/darknet64/darknet \
-    && rm -f /defaults/CaptchaSolver/tools/offlineCaptchaSolver/node.exe \
-    && rm -f /defaults/CaptchaSolver/tools/offlineCaptchaSolver/darknet64/*.exe \
-    && rm -f /defaults/CaptchaSolver/tools/offlineCaptchaSolver/darknet64/*.dll
+RUN cp /defaults/darknet /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/darknet64/darknet \
+    && rm -f /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/node.exe \
+    && rm -f /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/darknet64/*.exe \
+    && rm -f /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/darknet64/*.dll
 
 # Pre-install npm dependencies at image build time (no dynamic runtime install)
-WORKDIR /defaults/CaptchaSolver/tools/offlineCaptchaSolver
+WORKDIR /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver
 RUN npm ci --production
 
 # Create s6 initialization script to populate /config and fix permissions
 RUN printf '#!/bin/sh\n\
-echo "[CaptchaSolver] Initializing CaptchaSolver in /config..."\n\
+echo "[JD2CaptchaSolver] Initializing JD2CaptchaSolver in /config..."\n\
 mkdir -p /config/jd/captcha/methods /config/tools/offlineCaptchaSolver\n\
-cp -rn /defaults/CaptchaSolver/jd/captcha/methods/* /config/jd/captcha/methods/ 2>/dev/null || true\n\
-cp -rn /defaults/CaptchaSolver/tools/offlineCaptchaSolver/* /config/tools/offlineCaptchaSolver/ 2>/dev/null || true\n\
+cp -rn /defaults/JD2CaptchaSolver/jd/captcha/methods/* /config/jd/captcha/methods/ 2>/dev/null || true\n\
+cp -rn /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/* /config/tools/offlineCaptchaSolver/ 2>/dev/null || true\n\
 cp -f /defaults/darknet /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
 dos2unix /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 chmod +x /config/tools/offlineCaptchaSolver/*.sh\n\
 chmod +x /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
 chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /config/tools/offlineCaptchaSolver /config/jd/captcha/methods\n\
-echo "[CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh \
+echo "[JD2CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh \
     && chmod +x /etc/cont-init.d/99-captchasolver.sh
 
 # Revert to unprivileged app user

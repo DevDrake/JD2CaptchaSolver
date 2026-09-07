@@ -1,8 +1,10 @@
-# JDownloader 2 Offline Captcha Solver
+# JD2CaptchaSolver - JDownloader 2 Offline Captcha Solver
 
 Automated offline CAPTCHA solver for JDownloader 2 (JD2). It uses a local **YOLO Darknet** convolutional neural network and in-memory geometric feature analysis to automatically solve CAPTCHAs that JD2 cannot handle natively.
 
 Runs **100% locally and offline** without third-party API keys or recurring subscription costs.
+
+> **Note:** Forked from [cracker0dks/CaptchaSolver](https://github.com/cracker0dks/CaptchaSolver) with security hardening, CPU/RAM performance optimizations, zero-allocation in-memory transforms, and native multi-architecture Docker support (AMD64 & ARM64).
 
 ---
 
@@ -28,13 +30,14 @@ This repository includes a production-ready, multi-stage [`Dockerfile`](Dockerfi
 **Features of the Docker setup:**
 * **Native Darknet Compilation:** Darknet is compiled from source in Stage 1 directly on Alpine Linux (`musl`), supporting both **AMD64 (x86_64)** and **ARM64** (Raspberry Pi, Apple Silicon hosts, ARM NAS) without glibc emulation hacks (`gcompat`).
 * **Pre-bundled Dependencies:** Node.js and production npm packages are baked into the image at build time.
+* **Cross-Platform Sanitization:** Automatically sanitizes Windows `CRLF` line endings via `dos2unix` on startup.
 * **Automatic Initialization:** On container startup, an s6 init hook initializes the JAC captcha methods into `/config/jd/captcha/methods` and tools into `/config/tools/offlineCaptchaSolver` with correct user permissions (`USER_ID:GROUP_ID`).
 
 #### Quickstart:
 1. Clone this repository:
    ```bash
-   git clone https://github.com/cracker0dks/CaptchaSolver.git
-   cd CaptchaSolver
+   git clone https://github.com/DevDrake/JD2CaptchaSolver.git
+   cd JD2CaptchaSolver
    ```
 
 2. Start the container with Docker Compose:
@@ -57,7 +60,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: jdownloader2-captchasolver:latest
+    image: jd2captchasolver:latest
     container_name: jdownloader2
     environment:
       - USER_ID=1000
@@ -88,8 +91,8 @@ services:
 
 2. **Clone & Install Dependencies**:
    ```bash
-   git clone https://github.com/cracker0dks/CaptchaSolver.git
-   cd CaptchaSolver/"JDownloader 2.0"/tools/offlineCaptchaSolver
+   git clone https://github.com/DevDrake/JD2CaptchaSolver.git
+   cd JD2CaptchaSolver/"JDownloader 2.0"/tools/offlineCaptchaSolver
    npm ci --production
    chmod +x *.sh darknet64/darknet
    ```
@@ -115,8 +118,11 @@ services:
 
 ### Method 3: Windows Installation
 
-1. Download the latest standalone release archive.
-2. Extract the contents of `JDownloader 2.0` directly into your main JDownloader 2 installation directory (e.g. `C:\Users\<User>\AppData\Local\JDownloader 2.0\`).
+1. Clone or download this repository:
+   ```cmd
+   git clone https://github.com/DevDrake/JD2CaptchaSolver.git
+   ```
+2. Extract or copy the contents of the `JDownloader 2.0` folder directly into your main JDownloader 2 installation directory (e.g. `C:\Users\<User>\AppData\Local\JDownloader 2.0\`).
 3. If Darknet fails to run, install the **Microsoft Visual C++ 2010 Service Pack 1 Redistributable Package** (x64).
 4. Restart JDownloader 2.
 
@@ -145,14 +151,14 @@ This alternative runs as a separate container, connects to the official **My.JDo
 ## Architecture & How It Works
 
 ### 1. 6-Digit Alphanumeric Captchas (Keep2Share & mirrors)
-* **Pre-processing:** The input image is converted to grayscale, and pixel thresholding (`rgb.r < 253`) strips out colored lines and background noise.
-* **Inference:** The cleaned image (`darknet64/temp.jpg`) is analyzed by Darknet using a custom-trained **YOLOv4-tiny** model (`yolov4-tiny-custom_last.weights`).
+* **Pre-processing:** The input image is converted to grayscale, and pixel thresholding (`rgb.r < 253`) strips out colored lines and background noise using a direct Uint8Array buffer pass.
+* **Inference:** The cleaned image (`darknet64/temp.jpg`) is analyzed by Darknet using a custom-trained **YOLOv4-tiny** model (`yolov4-tiny-custom_last.weights`) configured in dedicated inference mode (`batch=1`, `subdivisions=1`).
 * **Post-processing:** Ambiguous font glyphs (such as uppercase `I` vs. lowercase `l`) are resolved, low-confidence false positives are pruned, and the predicted 6-character string is written to `result.txt`.
 * Detailed training documentation: [Walkthrough](docs/howToSolveNew6DigitCaptchasWalkthrough.md).
 
 ### 2. Geometric Shape Captchas (FileJoker)
 * **Pre-processing:** The $5 \times 5$ CAPTCHA grid is segmented into individual tiles.
-* **Clustering & Detection:** Each tile is blurred, pixel-clustered (`image-pixelizer`), and flood-filled from the center.
+* **Clustering & Detection:** Each tile is blurred, pixel-clustered (`image-pixelizer`), and flood-filled from the center using a zero-allocation flat-array queue.
 * **Shape Classification:** Radius and perimeter pixel counts identify the geometry (Circle, Hexagon, Pentagon, Square, Triangle) to match the prompt tile.
 * **Performance:** All transformations operate in memory to prevent disk wear on SSD/flash storage.
 * Detailed shape documentation: [Walkthrough](docs/howToSolveGeoCaptchasWalkthrough.md).
@@ -188,3 +194,10 @@ If a host changes its CAPTCHA provider:
 1. Navigate to `jd/captcha/methods/` in your JDownloader folder.
 2. Move or rename the corresponding directory (e.g. `keep2share_linux` or `filejoker_linux`).
 3. Restart JDownloader 2.
+
+---
+
+## Credits & Upstream
+* Original concept and YOLO training by [cracker0dks](https://github.com/cracker0dks/CaptchaSolver).
+* Linux support contributions by Corubba.
+* Hardening, performance tuning, and multi-arch Docker containerization by [DevDrake](https://github.com/DevDrake/JD2CaptchaSolver).
