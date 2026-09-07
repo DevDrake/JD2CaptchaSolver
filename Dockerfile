@@ -12,8 +12,8 @@ RUN apk add --no-cache \
 
 WORKDIR /tmp/darknet
 RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
-    && sed -i 's/AVX=1/AVX=0/g' Makefile \
-    && sed -i 's/OPENMP=1/OPENMP=0/g' Makefile \
+    && sed -i 's/^AVX=.*/AVX=0/g' Makefile \
+    && sed -i 's/^OPENMP=.*/OPENMP=0/g' Makefile \
     && make -j$(nproc)
 
 # Stage 2: Final runtime container extending jlesage/jdownloader-2
@@ -54,8 +54,8 @@ RUN npm ci --production
 RUN printf '#!/bin/sh\n\
 echo "[JD2CaptchaSolver] Initializing JD2CaptchaSolver in /config..."\n\
 mkdir -p /config/jd/captcha/methods /config/tools/offlineCaptchaSolver\n\
-cp -rn /defaults/JD2CaptchaSolver/jd/captcha/methods/* /config/jd/captcha/methods/ 2>/dev/null || true\n\
-cp -rn /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/* /config/tools/offlineCaptchaSolver/ 2>/dev/null || true\n\
+cp -rf /defaults/JD2CaptchaSolver/jd/captcha/methods/. /config/jd/captcha/methods/\n\
+cp -rf /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/. /config/tools/offlineCaptchaSolver/\n\
 cp -f /defaults/darknet /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
 dos2unix /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 chmod +x /config/tools/offlineCaptchaSolver/*.sh\n\

@@ -1,0 +1,11 @@
+# Force LF line endings for shell scripts and Docker files
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.cfg text eol=lf
+*.data text eol=lf
+*.names text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+
+# Force CRLF line endings for Windows scripts
+*.bat text eol=crlf

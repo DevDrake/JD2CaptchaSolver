@@ -23,7 +23,7 @@ Runs **100% locally and offline** without third-party API keys or recurring subs
 
 ## Installation & Deployment
 
-### Method 1: Docker / Homelab (Recommended)
+### Method 1: Docker / Homelab with Docker Compose (Recommended)
 
 This repository includes a production-ready, multi-stage [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) based on `jlesage/jdownloader-2`.
 
@@ -80,7 +80,45 @@ services:
 
 ---
 
-### Method 2: Manual Linux Installation
+### Method 2: Existing Docker Container (`jlesage/jdownloader-2`)
+
+If you already have a running `jlesage/jdownloader-2` container (in Portainer, Unraid, TrueNAS, Synology, or plain Docker) and do not want to recreate or rebuild it, you can install JD2CaptchaSolver directly into the running container using [`install-in-docker.sh`](install-in-docker.sh).
+
+#### Automated One-Liner (No Host Cloning Required):
+Run this command on your Docker host (replace `jdownloader2` with your container's name or ID):
+```bash
+docker exec -u 0 -it jdownloader2 sh -c "wget -qO- https://raw.githubusercontent.com/DevDrake/JD2CaptchaSolver/master/install-in-docker.sh | sh"
+```
+
+*Or using `curl` if `wget` is not available:*
+```bash
+docker exec -u 0 -it jdownloader2 sh -c "curl -fsSL https://raw.githubusercontent.com/DevDrake/JD2CaptchaSolver/master/install-in-docker.sh | sh"
+```
+
+#### Manual Run from Cloned Repo:
+If you have already cloned this repository to your Docker host:
+```bash
+docker cp install-in-docker.sh jdownloader2:/tmp/install-in-docker.sh
+docker exec -u 0 -it jdownloader2 sh /tmp/install-in-docker.sh
+```
+
+**What the installer does automatically:**
+1. Installs Node.js, npm, runtime libraries, and certificates via Alpine `apk`.
+2. Compiles Darknet natively from source inside the container for your exact host architecture (x86_64, ARM64, etc.) with maximum CPU compatibility (`AVX=0`, `OPENMP=0`).
+3. Clones `DevDrake/JD2CaptchaSolver` and copies the solver scripts and JAC methods to `/config`.
+4. Installs npm production dependencies (`jimp`, `image-pixelizer`).
+5. Configures an s6 boot script (`/etc/cont-init.d/99-captchasolver.sh`) so file permissions and executables remain active across container restarts.
+6. Cleans up compiler tools and temporary build files to save container disk space.
+
+**Final Step:**
+Restart JDownloader 2 via the Web UI (`File -> Restart`), or restart the container:
+```bash
+docker restart jdownloader2
+```
+
+---
+
+### Method 3: Manual Bare-Metal Linux Installation
 
 1. **Install Node.js & npm**:
    Ensure Node.js (v14+) is installed and accessible in your system `PATH`:
@@ -116,7 +154,7 @@ services:
 
 ---
 
-### Method 3: Windows Installation
+### Method 4: Windows Installation
 
 1. Clone or download this repository:
    ```cmd
@@ -128,7 +166,7 @@ services:
 
 ---
 
-### Method 4: Headless Remote Service
+### Method 5: Headless Remote Service
 
 If you run JDownloader on a remote NAS/server and prefer a decoupled architecture that does not modify your JDownloader container, consider:
 👉 **[cracker0dks/captchaSolverRemote](https://github.com/cracker0dks/captchaSolverRemote)**
