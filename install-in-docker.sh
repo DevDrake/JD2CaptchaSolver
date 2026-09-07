@@ -108,6 +108,7 @@ npm ci --production || npm install --production
 
 # 9. Set permissions, line endings, and ownership
 echo "[6/6] Finalizing permissions and line endings..."
+sed -i 's/\r$//' "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/"*.sh 2>/dev/null || true
 dos2unix "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/"*.sh 2>/dev/null || true
 chmod +x "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/"*.sh
 chmod +x "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/darknet64/darknet"
@@ -123,6 +124,7 @@ if [ -d /etc/cont-init.d ]; then
 TARGET_UID="${USER_ID:-$(stat -c '%u' /config 2>/dev/null || echo 1000)}"
 TARGET_GID="${GROUP_ID:-$(stat -c '%g' /config 2>/dev/null || echo 1000)}"
 if [ -d /config/tools/offlineCaptchaSolver ]; then
+    sed -i 's/\r$//' /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true
     chmod +x /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true
     chmod +x /config/tools/offlineCaptchaSolver/darknet64/darknet 2>/dev/null || true
     chown -R "$TARGET_UID:$TARGET_GID" /config/tools/offlineCaptchaSolver /config/jd/captcha/methods 2>/dev/null || true

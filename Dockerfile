@@ -52,6 +52,7 @@ RUN cp /defaults/darknet /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/d
 
 # Pre-install npm dependencies at image build time (no dynamic runtime install)
 WORKDIR /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver
+RUN sed -i 's/\r$//' *.sh 2>/dev/null || true
 RUN npm ci --production
 
 # Create s6 initialization script to populate /config and fix permissions
@@ -61,6 +62,7 @@ mkdir -p /config/jd/captcha/methods /config/tools/offlineCaptchaSolver\n\
 cp -rf /defaults/JD2CaptchaSolver/jd/captcha/methods/. /config/jd/captcha/methods/\n\
 cp -rf /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/. /config/tools/offlineCaptchaSolver/\n\
 cp -f /defaults/darknet /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
+sed -i '\''s/\\r$//'\'' /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 dos2unix /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 chmod +x /config/tools/offlineCaptchaSolver/*.sh\n\
 chmod +x /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
