@@ -4,7 +4,9 @@ Automated offline CAPTCHA solver for JDownloader 2 (JD2). It uses a local **YOLO
 
 Runs **100% locally and offline** without third-party API keys or recurring subscription costs.
 
-> **Note:** Forked from [cracker0dks/CaptchaSolver](https://github.com/cracker0dks/CaptchaSolver) with security hardening, CPU/RAM performance optimizations, zero-allocation in-memory transforms, and native multi-architecture Docker support (AMD64 & ARM64).
+> [!NOTE]
+> **Special Thanks to the Original Author:**  
+> Huge thanks and full credit to [**cracker0dks**](https://github.com/cracker0dks) for creating the original [CaptchaSolver](https://github.com/cracker0dks/CaptchaSolver) project and training the neural network models that make offline CAPTCHA solving possible. This fork builds upon their excellent foundational work by introducing security hardening, zero-allocation in-memory transforms, CPU/RAM optimizations, automated GitHub Actions multi-arch CI/CD, and native Docker support.
 
 ---
 
@@ -34,15 +36,38 @@ This repository includes a production-ready, multi-stage [`Dockerfile`](Dockerfi
 * **Automatic Initialization:** On container startup, an s6 init hook initializes the JAC captcha methods into `/config/jd/captcha/methods` and tools into `/config/tools/offlineCaptchaSolver` with correct user permissions (`USER_ID:GROUP_ID`).
 
 #### Quickstart:
+
+**Option A: Run pre-built image from GitHub Container Registry (Fastest)**
+```bash
+# Pull the pre-built multi-arch image (AMD64 & ARM64)
+docker pull ghcr.io/devdrake/jd2captchasolver:latest
+```
+
+Or using `docker run`:
+```bash
+docker run -d \
+  --name=jdownloader2 \
+  -p 5800:5800 \
+  -v /path/to/config:/config:rw \
+  -v /path/to/downloads:/output:rw \
+  -e USER_ID=1000 \
+  -e GROUP_ID=1000 \
+  -e TZ=Etc/UTC \
+  --restart unless-stopped \
+  ghcr.io/devdrake/jd2captchasolver:latest
+```
+
+**Option B: Clone & Build locally with Docker Compose**
 1. Clone this repository:
    ```bash
    git clone https://github.com/DevDrake/JD2CaptchaSolver.git
    cd JD2CaptchaSolver
    ```
 
-2. Start the container with Docker Compose:
+2. Start the container:
    ```bash
-   docker compose up -d --build
+   docker compose up -d
+   # (or 'docker compose up -d --build' to force a local rebuild)
    ```
 
 3. Open your browser and navigate to:
@@ -57,10 +82,12 @@ version: '3.8'
 
 services:
   jdownloader:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: jd2captchasolver:latest
+    # Pre-built multi-arch image from GitHub Container Registry (ghcr.io)
+    image: ghcr.io/devdrake/jd2captchasolver:latest
+    # Optional: build locally from source
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: jdownloader2
     environment:
       - USER_ID=1000
@@ -172,6 +199,22 @@ If you run JDownloader on a remote NAS/server and prefer a decoupled architectur
 👉 **[cracker0dks/captchaSolverRemote](https://github.com/cracker0dks/captchaSolverRemote)**
 
 This alternative runs as a separate container, connects to the official **My.JDownloader cloud API**, listens for CAPTCHAs, and submits solutions remotely.
+
+---
+
+## CI/CD & Automated Container Builds
+
+This repository includes an automated GitHub Actions workflow ([`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)) that builds and publishes multi-architecture Docker images.
+
+* **Target Registries:**
+  * **GitHub Container Registry (GHCR):** `ghcr.io/devdrake/jd2captchasolver` (published automatically on every push to `master` and tagged release).
+  * **Docker Hub (Optional):** `docker.io/<username>/jd2captchasolver` (published automatically if repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are set).
+* **Supported Architectures:** Cross-compiles native Darknet binaries for both **`linux/amd64`** (x86_64) and **`linux/arm64`** (Raspberry Pi, ARM NAS, Apple Silicon).
+* **Build Triggers:**
+  * Pushes to `master` or `main` branches.
+  * Version tags (e.g., `v2.0.0`).
+  * Manual execution via the **Actions** tab in GitHub (`workflow_dispatch`).
+  * Pull Requests (build-tested without pushing).
 
 ---
 

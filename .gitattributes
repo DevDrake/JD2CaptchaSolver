@@ -6,6 +6,8 @@ Dockerfile text eol=lf
 *.names text eol=lf
 *.js text eol=lf
 *.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 
 # Force CRLF line endings for Windows scripts
 *.bat text eol=crlf

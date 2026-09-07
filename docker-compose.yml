@@ -2,10 +2,12 @@ version: '3.8'
 
 services:
   jdownloader:
+    # Pre-built multi-arch image from GitHub Container Registry (ghcr.io)
+    image: ghcr.io/devdrake/jd2captchasolver:latest
+    # Optional: build locally from source
     build:
       context: .
       dockerfile: Dockerfile
-    image: jd2captchasolver:latest
     container_name: jdownloader2
     environment:
       - USER_ID=1000
