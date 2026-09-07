@@ -55,6 +55,11 @@ rm -rf "$TMP_DARKNET_DIR"
 git clone --depth 1 https://github.com/AlexeyAB/darknet.git "$TMP_DARKNET_DIR"
 cd "$TMP_DARKNET_DIR"
 
+# Patch musl compatibility: guard glibc-specific execinfo.h and strip -Wfatal-errors
+sed -i 's|#include <execinfo.h>|#if defined(__GLIBC__)\n#include <execinfo.h>\n#endif|' src/utils.c
+sed -i 's|#if !defined(WIN32) && !defined(__ANDROID__)|#if defined(__GLIBC__)|' src/utils.c
+sed -i 's/-Wfatal-errors//g' CMakeLists.txt
+
 cmake -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_CUDA=OFF \

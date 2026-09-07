@@ -13,6 +13,9 @@ RUN apk add --no-cache \
 
 WORKDIR /tmp/darknet
 RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
+    && sed -i 's|#include <execinfo.h>|#if defined(__GLIBC__)\n#include <execinfo.h>\n#endif|' src/utils.c \
+    && sed -i 's|#if !defined(WIN32) && !defined(__ANDROID__)|#if defined(__GLIBC__)|' src/utils.c \
+    && sed -i 's/-Wfatal-errors//g' CMakeLists.txt \
     && cmake -B build \
         -DCMAKE_BUILD_TYPE=Release \
         -DENABLE_CUDA=OFF \
@@ -22,7 +25,8 @@ RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
         -DBUILD_SHARED_LIBS=OFF \
         -DBUILD_USELIB_TRACK=OFF \
     && cmake --build build --target darknet -j$(nproc) \
-    && cp $(find build -name darknet -type f) /tmp/darknet_binary
+    && DARKNET_BIN=$(find build -name darknet -type f | head -n 1) \
+    && cp -f "$DARKNET_BIN" /tmp/darknet_binary
 
 # Stage 2: Final runtime container extending jlesage/jdownloader-2
 FROM jlesage/jdownloader-2:latest
