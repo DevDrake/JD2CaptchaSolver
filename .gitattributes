@@ -1,4 +1,7 @@
-# Force LF line endings for shell scripts and Docker files
+# Default behavior: auto-normalize text files to LF
+* text=auto eol=lf
+
+# Force LF line endings for shell scripts and container files
 *.sh text eol=lf
 Dockerfile text eol=lf
 *.cfg text eol=lf
@@ -11,6 +14,24 @@ Dockerfile text eol=lf
 *.xml text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
+*.list text eol=lf
+.gitignore text eol=lf
+.dockerignore text eol=lf
 
-# Force CRLF line endings for Windows scripts
+# Force CRLF line endings for Windows batch scripts
 *.bat text eol=crlf
+
+# Explicit binary files
+*.png binary
+*.PNG binary
+*.jpg binary
+*.JPG binary
+*.jpeg binary
+*.gif binary
+*.weights binary
+*.dll binary
+*.exe binary
+*.lib binary
+*.exp binary
+darknet binary
+

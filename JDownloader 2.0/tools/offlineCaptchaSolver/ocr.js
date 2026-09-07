@@ -87,13 +87,16 @@ function getKeep2share(file, callback) {
                 });
                 let resultString = result.toString('utf8');
 
-                var lines = resultString.split(EOL);
+                var lines = resultString.split(/\r?\n/);
                 
                 var valdResA = [];
                 for (var i = 0; i < lines.length; i++) {
-                    var line = lines[i];
+                    var line = lines[i].trim();
                     if (line.indexOf(":") !== -1 && line.indexOf("%") !== -1) {
-                        valdResA.push({ c: line.split(":")[0], p: line.split(": ")[1].replace("%", "") });
+                        var parts = line.split(":");
+                        var charVal = parts[0].trim();
+                        var probVal = parseFloat(parts[1].replace("%", "").trim());
+                        valdResA.push({ c: charVal, p: probVal });
                     }
                 }
 
