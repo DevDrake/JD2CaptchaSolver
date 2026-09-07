@@ -42,6 +42,7 @@ apk add --no-cache \
     nodejs \
     npm \
     build-base \
+    cmake \
     git \
     libstdc++ \
     ca-certificates \
@@ -54,18 +55,24 @@ rm -rf "$TMP_DARKNET_DIR"
 git clone --depth 1 https://github.com/AlexeyAB/darknet.git "$TMP_DARKNET_DIR"
 cd "$TMP_DARKNET_DIR"
 
-# Disable AVX and OpenMP for maximum compatibility across NAS/server CPUs
-sed -i 's/^AVX=.*/AVX=0/g' Makefile
-sed -i 's/^OPENMP=.*/OPENMP=0/g' Makefile
+cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DENABLE_CUDA=OFF \
+    -DENABLE_OPENCV=OFF \
+    -DENABLE_CUDNN=OFF \
+    -DENABLE_SSE_AND_AVX_FLAGS=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_USELIB_TRACK=OFF
 
 NPROC=$(nproc 2>/dev/null || echo 1)
-make -j"$NPROC"
+cmake --build build --target darknet -j"$NPROC"
 
-if [ ! -f "$TMP_DARKNET_DIR/darknet" ]; then
+DARKNET_BIN=$(find build -name darknet -type f | head -n 1)
+if [ -z "$DARKNET_BIN" ] || [ ! -f "$DARKNET_BIN" ]; then
     echo "ERROR: Darknet compilation failed. 'darknet' binary was not produced." >&2
     exit 1
 fi
-echo "Darknet compiled successfully."
+echo "Darknet compiled successfully: $DARKNET_BIN"
 
 # 6. Fetch JD2CaptchaSolver from DevDrake/JD2CaptchaSolver
 echo "[3/6] Fetching JD2CaptchaSolver repository..."
@@ -82,7 +89,7 @@ cp -rf "$TMP_SOLVER_DIR/JDownloader 2.0/jd/captcha/methods/." "$JD2_CONFIG_DIR/j
 cp -rf "$TMP_SOLVER_DIR/JDownloader 2.0/tools/offlineCaptchaSolver/." "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/"
 
 # Replace darknet binary with the natively compiled binary
-cp -f "$TMP_DARKNET_DIR/darknet" "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/darknet64/darknet"
+cp -f "$DARKNET_BIN" "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/darknet64/darknet"
 
 # Remove unnecessary Windows binaries to save space in /config
 rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/node.exe"
@@ -122,7 +129,7 @@ fi
 # Cleanup build artifacts and compilers to reclaim disk space
 echo "Cleaning up temporary build artifacts..."
 rm -rf "$TMP_DARKNET_DIR" "$TMP_SOLVER_DIR"
-apk del build-base git 2>/dev/null || true
+apk del build-base cmake git 2>/dev/null || true
 
 echo ""
 echo "========================================================"

@@ -8,13 +8,21 @@ FROM alpine:3.19 AS darknet-builder
 
 RUN apk add --no-cache \
     build-base \
+    cmake \
     git
 
 WORKDIR /tmp/darknet
 RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
-    && sed -i 's/^AVX=.*/AVX=0/g' Makefile \
-    && sed -i 's/^OPENMP=.*/OPENMP=0/g' Makefile \
-    && make -j$(nproc)
+    && cmake -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DENABLE_CUDA=OFF \
+        -DENABLE_OPENCV=OFF \
+        -DENABLE_CUDNN=OFF \
+        -DENABLE_SSE_AND_AVX_FLAGS=OFF \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DBUILD_USELIB_TRACK=OFF \
+    && cmake --build build --target darknet -j$(nproc) \
+    && cp $(find build -name darknet -type f) /tmp/darknet_binary
 
 # Stage 2: Final runtime container extending jlesage/jdownloader-2
 FROM jlesage/jdownloader-2:latest
@@ -23,7 +31,7 @@ RUN add-pkg nodejs npm libstdc++ dos2unix || apk add --no-cache nodejs npm libst
 
 
 # Copy the natively compiled Darknet binary
-COPY --from=darknet-builder /tmp/darknet/darknet /defaults/darknet
+COPY --from=darknet-builder /tmp/darknet_binary /defaults/darknet
 
 # Prepare directory for JD2CaptchaSolver defaults
 RUN mkdir -p /defaults/JD2CaptchaSolver/jd/captcha/methods \
