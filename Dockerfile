@@ -19,14 +19,7 @@ RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
 # Stage 2: Final runtime container extending jlesage/jdownloader-2
 FROM jlesage/jdownloader-2:latest
 
-# Switch to root to install system dependencies
-USER root
-
-RUN apk add --no-cache \
-    nodejs \
-    npm \
-    libstdc++ \
-    dos2unix
+RUN add-pkg nodejs npm libstdc++ dos2unix || apk add --no-cache nodejs npm libstdc++ dos2unix
 
 
 # Copy the natively compiled Darknet binary
@@ -64,6 +57,4 @@ chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /config/tools/offlineCaptchaSolver /
 echo "[JD2CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh \
     && chmod +x /etc/cont-init.d/99-captchasolver.sh
 
-# Revert to unprivileged app user
-USER app
 WORKDIR /config
