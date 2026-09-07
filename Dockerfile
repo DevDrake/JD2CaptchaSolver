@@ -13,8 +13,8 @@ RUN apk add --no-cache \
 
 WORKDIR /tmp/darknet
 RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
-    && sed -i 's|#include <execinfo.h>|#if defined(__GLIBC__)\n#include <execinfo.h>\n#endif|' src/utils.c \
-    && sed -i 's|#if !defined(WIN32) && !defined(__ANDROID__)|#if defined(__GLIBC__)|' src/utils.c \
+    && sed -i '/<execinfo\.h>/d' src/utils.c \
+    && sed -i 's/#if !defined(WIN32) && !defined(__ANDROID__)/#if 0/' src/utils.c \
     && sed -i 's/-Wfatal-errors//g' CMakeLists.txt \
     && cmake -B build \
         -DCMAKE_BUILD_TYPE=Release \
