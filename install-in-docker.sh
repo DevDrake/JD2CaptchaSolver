@@ -60,7 +60,7 @@ sed -i '/<execinfo\.h>/d' src/utils.c
 sed -i 's/#if !defined(WIN32) && !defined(__ANDROID__)/#if 0/' src/utils.c
 sed -i 's/-Wfatal-errors//g' CMakeLists.txt
 
-cmake -B build \
+cmake -B build_cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DENABLE_CUDA=OFF \
     -DENABLE_OPENCV=OFF \
@@ -70,10 +70,10 @@ cmake -B build \
     -DBUILD_USELIB_TRACK=OFF
 
 NPROC=$(nproc 2>/dev/null || echo 1)
-cmake --build build --target darknet -j"$NPROC"
+cmake --build build_cmake --target darknet -j"$NPROC"
 
-DARKNET_BIN=$(find build -name darknet -type f | head -n 1)
-if [ -z "$DARKNET_BIN" ] || [ ! -f "$DARKNET_BIN" ]; then
+DARKNET_BIN="build_cmake/darknet"
+if [ ! -f "$DARKNET_BIN" ]; then
     echo "ERROR: Darknet compilation failed. 'darknet' binary was not produced." >&2
     exit 1
 fi

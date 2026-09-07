@@ -16,7 +16,7 @@ RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
     && sed -i '/<execinfo\.h>/d' src/utils.c \
     && sed -i 's/#if !defined(WIN32) && !defined(__ANDROID__)/#if 0/' src/utils.c \
     && sed -i 's/-Wfatal-errors//g' CMakeLists.txt \
-    && cmake -B build \
+    && cmake -B build_cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DENABLE_CUDA=OFF \
         -DENABLE_OPENCV=OFF \
@@ -24,9 +24,8 @@ RUN git clone --depth 1 https://github.com/AlexeyAB/darknet.git . \
         -DENABLE_SSE_AND_AVX_FLAGS=OFF \
         -DBUILD_SHARED_LIBS=OFF \
         -DBUILD_USELIB_TRACK=OFF \
-    && cmake --build build --target darknet -j$(nproc) \
-    && DARKNET_BIN=$(find build -name darknet -type f | head -n 1) \
-    && cp -f "$DARKNET_BIN" /tmp/darknet_binary
+    && cmake --build build_cmake --target darknet -j$(nproc) \
+    && cp -f build_cmake/darknet /tmp/darknet_binary
 
 # Stage 2: Final runtime container extending jlesage/jdownloader-2
 FROM jlesage/jdownloader-2:latest
