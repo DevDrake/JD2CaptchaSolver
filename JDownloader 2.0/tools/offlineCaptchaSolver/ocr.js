@@ -13,9 +13,9 @@ const DEBUG = process.env.DEBUG === 'true';
 const darknetExec = (process.platform === 'win32' ? 'darknet_no_gpu.exe' : './darknet');
 
 var what2Scan = process.argv[2] || "keep2share.cc"; //Start parameter
-var inputPic = process.env.CAPTCHA_INPUT || process.argv[3] || 'input.gif';
-var resultFile = process.env.CAPTCHA_OUTPUT || process.argv[4] || 'result.txt';
-var logFile = process.env.CAPTCHA_LOG || 'log.txt';
+var inputPic = path.resolve(__dirname, process.env.CAPTCHA_INPUT || process.argv[3] || 'input.gif');
+var resultFile = path.resolve(__dirname, process.env.CAPTCHA_OUTPUT || process.argv[4] || 'result.txt');
+var logFile = path.resolve(__dirname, process.env.CAPTCHA_LOG || 'log.txt');
 
 console.log("Running ->", what2Scan, "Input:", inputPic);
 
@@ -30,6 +30,13 @@ function failSolve(reason) {
     }
     process.exit(1);
 }
+
+process.on('uncaughtException', (err) => {
+    failSolve("Uncaught exception: " + (err ? err.message : err));
+});
+process.on('unhandledRejection', (reason) => {
+    failSolve("Unhandled rejection: " + (reason ? (reason.message || reason) : reason));
+});
 
 if (what2Scan == "keep2share.cc") {
     console.log("keep2share.cc");
