@@ -28,3 +28,8 @@ build/Release
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 /JDownloader 2.0/tools/offlineCaptchaSolver/node_modules/
 /JDownloader 2.0/tools/offlineCaptchaSolver/darknet64/result.txt
+/JDownloader 2.0/tools/offlineCaptchaSolver/result.txt
+/JDownloader 2.0/tools/offlineCaptchaSolver/log.txt
+/JDownloader 2.0/tools/offlineCaptchaSolver/solver.log
+/JDownloader 2.0/tools/offlineCaptchaSolver/darknet64/temp.jpg
+

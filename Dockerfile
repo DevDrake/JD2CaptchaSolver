@@ -62,6 +62,7 @@ mkdir -p /config/jd/captcha/methods /config/tools/offlineCaptchaSolver\n\
 cp -rf /defaults/JD2CaptchaSolver/jd/captcha/methods/. /config/jd/captcha/methods/\n\
 cp -rf /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/. /config/tools/offlineCaptchaSolver/\n\
 cp -f /defaults/darknet /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
+rm -f /config/tools/offlineCaptchaSolver/result.txt /config/tools/offlineCaptchaSolver/log.txt /config/tools/offlineCaptchaSolver/solver.log\n\
 sed -i '\''s/\\r$//'\'' /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 dos2unix /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 chmod +x /config/tools/offlineCaptchaSolver/*.sh\n\

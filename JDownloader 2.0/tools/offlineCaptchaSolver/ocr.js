@@ -14,10 +14,22 @@ const darknetExec = (process.platform === 'win32' ? 'darknet_no_gpu.exe' : './da
 
 var what2Scan = process.argv[2] || "keep2share.cc"; //Start parameter
 var inputPic = process.env.CAPTCHA_INPUT || process.argv[3] || 'input.gif';
-var resultFile = process.env.CAPTCHA_OUTPUT || 'result.txt';
+var resultFile = process.env.CAPTCHA_OUTPUT || process.argv[4] || 'result.txt';
 var logFile = process.env.CAPTCHA_LOG || 'log.txt';
 
 console.log("Running ->", what2Scan, "Input:", inputPic);
+
+function failSolve(reason) {
+    console.error(`[CaptchaSolver] ${reason}`);
+    try {
+        if (fs.existsSync(resultFile)) {
+            fs.unlinkSync(resultFile);
+        }
+    } catch (e) {
+        // ignore
+    }
+    process.exit(1);
+}
 
 if (what2Scan == "keep2share.cc") {
     console.log("keep2share.cc");
@@ -25,11 +37,10 @@ if (what2Scan == "keep2share.cc") {
         try {
             fs.writeFileSync(resultFile, content["text"].toString());
             fs.writeFileSync(logFile, JSON.stringify(content, false, 2));
-            console.log("Solved:", content["text"]);
+            console.log("Solved:", content["text"], `(confidence: ${content["confidence"]}%)`);
             process.exit(0);
         } catch (err) {
-            console.error("Failed writing result file:", err);
-            process.exit(1);
+            failSolve("Failed writing result file: " + err.message);
         }
     });
 } else if (what2Scan == "filejoker.net") {
@@ -41,20 +52,17 @@ if (what2Scan == "keep2share.cc") {
             console.log("Solved:", content["text"]);
             process.exit(0);
         } catch (err) {
-            console.error("Failed writing result file:", err);
-            process.exit(1);
+            failSolve("Failed writing result file: " + err.message);
         }
     });
 } else {
-    console.error("No function found for: ", what2Scan);
-    process.exit(1);
+    failSolve("No function found for: " + what2Scan);
 }
 
 //Solving keep2share.cc new captchas
 function getKeep2share(file, callback) {
     if (!fs.existsSync(file)) {
-        console.error("Captcha input file does not exist:", file);
-        process.exit(1);
+        failSolve("Captcha input file does not exist: " + file);
     }
 
     Jimp.read(file).then(image => {
@@ -75,12 +83,11 @@ function getKeep2share(file, callback) {
 
         image.write(tempImgPath, function (err) {
             if (err) {
-                console.error("Failed to write temporary image for darknet:", err);
-                process.exit(1);
+                failSolve("Failed to write temporary image for darknet: " + err);
             }
 
             try {
-                let cmd = darknetExec + ' detector test data/obj.data yolov4-tiny-custom.cfg yolov4-tiny-custom_last.weights -dont_show temp.jpg';
+                let cmd = darknetExec + ' detector test data/obj.data yolov4-tiny-custom.cfg yolov4-tiny-custom_last.weights -dont_show -ext_output temp.jpg';
                 let result = execSync(cmd, {
                     cwd: darknetDir,
                     stdio: ['pipe', 'pipe', 'pipe']
@@ -93,10 +100,15 @@ function getKeep2share(file, callback) {
                 for (var i = 0; i < lines.length; i++) {
                     var line = lines[i].trim();
                     if (line.indexOf(":") !== -1 && line.indexOf("%") !== -1) {
-                        var parts = line.split(":");
-                        var charVal = parts[0].trim();
-                        var probVal = parseFloat(parts[1].replace("%", "").trim());
-                        valdResA.push({ c: charVal, p: probVal });
+                        // Supports both with and without -ext_output:
+                        // "c: 95%" or "c: 95% (left_x: 120 top_y: 50 width: 30 height: 40)"
+                        var match = line.match(/^([a-zA-Z0-9]):\s*(\d+)%(?:\s*\(left_x:\s*([-\d]+))?/);
+                        if (match) {
+                            var charVal = match[1];
+                            var probVal = parseFloat(match[2]);
+                            var leftX = match[3] !== undefined ? parseInt(match[3], 10) : i;
+                            valdResA.push({ c: charVal, p: probVal, x: leftX });
+                        }
                     }
                 }
 
@@ -117,33 +129,43 @@ function getKeep2share(file, callback) {
                     }
                     valdResA.splice(index, 1);
                 }
+
+                // Strict validation: Keep2Share captchas must have exactly 6 characters
+                if (valdResA.length !== 6) {
+                    failSolve(`Solving impossible: detected ${valdResA.length} character(s) (expected 6). Falling back to 2Captcha.`);
+                }
+
+                // Sort the 6 characters spatially from left to right by bounding box X coordinate
+                valdResA.sort((a, b) => a.x - b.x);
+
                 var text = "";
-                var confidence = 0;
+                var totalConfidence = 0;
                 for (var i = 0; i < valdResA.length; i++) {
                     text += valdResA[i]["c"];
-                    confidence += parseFloat(valdResA[i]["p"]);
+                    totalConfidence += parseFloat(valdResA[i]["p"]);
                 }
-                confidence = Math.round(confidence / 6);
+                var confidence = Math.round(totalConfidence / 6);
+
+                // Strict confidence validation: reject low confidence garbage
+                if (confidence < 50) {
+                    failSolve(`Solving impossible: average confidence too low (${confidence}% < 50%). Falling back to 2Captcha.`);
+                }
+
                 callback({ host: what2Scan, text: text, confidence: confidence });
             } catch (execErr) {
-                console.error("Darknet execution error:", execErr.message);
-                if (execErr.stdout) console.error("stdout:", execErr.stdout.toString());
-                if (execErr.stderr) console.error("stderr:", execErr.stderr.toString());
-                process.exit(1);
+                failSolve("Darknet execution error: " + execErr.message);
             }
         });
 
     }).catch(err => {
-        console.error("Failed to load captcha image:", err);
-        process.exit(1);
+        failSolve("Failed to load captcha image: " + (err ? err.message : err));
     });
 }
 
 
 function getFilejoker(file, callback) {
     if (!fs.existsSync(file)) {
-        console.error("Captcha input file does not exist:", file);
-        process.exit(1);
+        failSolve("Captcha input file does not exist: " + file);
     }
 
     Jimp.read(file).then(image => {
@@ -244,6 +266,11 @@ function getFilejoker(file, callback) {
                 }
             }
         }
+
+        if (!solution || solution === "") {
+            failSolve("FileJoker: no matching geometric shape found. Falling back to 2Captcha.");
+        }
+
         callback({ host: what2Scan, text: solution, confidence: confidence });
 
         if (DEBUG) {
@@ -257,8 +284,7 @@ function getFilejoker(file, callback) {
             }
         }
     }).catch(err => {
-        console.error("Failed processing filejoker captcha:", err);
-        process.exit(1);
+        failSolve("Failed processing filejoker captcha: " + (err ? err.message : err));
     });
 
 

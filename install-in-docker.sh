@@ -100,6 +100,9 @@ cp -f "$DARKNET_BIN" "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/darknet64/darkn
 rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/node.exe"
 rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/darknet64/"*.exe
 rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/darknet64/"*.dll
+rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/result.txt"
+rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/log.txt"
+rm -f "$JD2_CONFIG_DIR/tools/offlineCaptchaSolver/solver.log"
 
 # 8. Install production npm dependencies
 echo "[5/6] Installing Node.js production dependencies..."
@@ -124,6 +127,7 @@ if [ -d /etc/cont-init.d ]; then
 TARGET_UID="${USER_ID:-$(stat -c '%u' /config 2>/dev/null || echo 1000)}"
 TARGET_GID="${GROUP_ID:-$(stat -c '%g' /config 2>/dev/null || echo 1000)}"
 if [ -d /config/tools/offlineCaptchaSolver ]; then
+    rm -f /config/tools/offlineCaptchaSolver/result.txt /config/tools/offlineCaptchaSolver/log.txt /config/tools/offlineCaptchaSolver/solver.log 2>/dev/null || true
     sed -i 's/\r$//' /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true
     chmod +x /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true
     chmod +x /config/tools/offlineCaptchaSolver/darknet64/darknet 2>/dev/null || true

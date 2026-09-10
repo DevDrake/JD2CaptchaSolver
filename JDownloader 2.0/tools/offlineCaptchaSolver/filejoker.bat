@@ -4,24 +4,18 @@ call checkdeps.bat
 
 
 set "file=result.txt"
-set "timeout=30"
-set /a "elapsed=0"
+if not "%~2"=="" set "file=%~2"
 
 if exist "%file%" del "%file%"
 
-node.exe ocr.js filejoker.net
-
-:wait
-if exist "%file%" (
-    exit /b 0
-)
-
-if %elapsed% GEQ %timeout% (
+node.exe ocr.js filejoker.net %*
+if errorlevel 1 (
+    if exist "%file%" del "%file%"
     exit /b 1
 )
 
-timeout /t 1 >nul
-set /a "elapsed+=1"
-goto wait
+if not exist "%file%" (
+    exit /b 1
+)
 
-timeout /t 1 >nul
+exit /b 0
