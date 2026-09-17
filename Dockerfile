@@ -1,7 +1,7 @@
-# ==============================================================================
+# ============================================================================== 
 # Multi-stage Dockerfile for JDownloader 2 with CaptchaSolver
 # Supports AMD64 and ARM64 architectures
-# ==============================================================================
+# ============================================================================== 
 
 # Stage 1: Build Darknet natively from source for Alpine musl
 FROM alpine:3.19 AS darknet-builder
@@ -54,8 +54,9 @@ RUN cp /defaults/darknet /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/d
 WORKDIR /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver
 RUN sed -i 's/\r$//' *.sh 2>/dev/null || true
 RUN npm ci --production
-# npm baked a root-owned compile cache into /tmp; hand it to the runtime user
-RUN chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /tmp
+# Node 24 bakes a root-owned compile cache into /tmp at build time;
+# hand it to the runtime user so the s6 entrypoint can clear it.
+RUN chown -R 1000:1000 /tmp
 
 # Create s6 initialization script to populate /config and fix permissions
 RUN printf '#!/bin/sh\n\
@@ -69,8 +70,8 @@ sed -i '\''s/\\r$//'\'' /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || t
 dos2unix /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 chmod +x /config/tools/offlineCaptchaSolver/*.sh\n\
 chmod +x /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
-chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /config/tools/offlineCaptchaSolver /config/jd/captcha/methods\n\
-echo "[JD2CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh \
+chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /config\n\
+echo "[JD2CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh \\
     && chmod +x /etc/cont-init.d/99-captchasolver.sh
 
 WORKDIR /config
