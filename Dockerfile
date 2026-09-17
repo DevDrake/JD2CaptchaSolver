@@ -54,6 +54,8 @@ RUN cp /defaults/darknet /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver/d
 WORKDIR /defaults/JD2CaptchaSolver/tools/offlineCaptchaSolver
 RUN sed -i 's/\r$//' *.sh 2>/dev/null || true
 RUN npm ci --production
+# npm baked a root-owned compile cache into /tmp; hand it to the runtime user
+RUN chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /tmp
 
 # Create s6 initialization script to populate /config and fix permissions
 RUN printf '#!/bin/sh\n\
