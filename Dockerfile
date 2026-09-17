@@ -71,7 +71,6 @@ dos2unix /config/tools/offlineCaptchaSolver/*.sh 2>/dev/null || true\n\
 chmod +x /config/tools/offlineCaptchaSolver/*.sh\n\
 chmod +x /config/tools/offlineCaptchaSolver/darknet64/darknet\n\
 chown -R ${USER_ID:-1000}:${GROUP_ID:-1000} /config\n\
-echo "[JD2CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh \\
-    && chmod +x /etc/cont-init.d/99-captchasolver.sh
+echo "[JD2CaptchaSolver] Initialization complete."\n' > /etc/cont-init.d/99-captchasolver.sh && chmod +x /etc/cont-init.d/99-captchasolver.sh
 
 WORKDIR /config
